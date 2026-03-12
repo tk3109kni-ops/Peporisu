@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PEPORIS</title>
+    <link rel="icon" type="image/png" href="tetorisu.jpg" >
+    <style>
+        body { background-image: url(Background.png); color: white; text-align: center; font-family: sans-serif; }
+        canvas { border: 2px solid #fff; background-color: #000; display: block; margin: 20px auto; }
+        #ui { margin-top: 10px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #222; color: #fff; border: 1px solid #fff; }
+        button:hover { background: #444; }
+        h1{color: #000;}
+        #score{
+            color: #444;
+        }
+        h2{color: #000;}
+    </style>
+</head>
+<body>
+    <h1>PEPORIS</h1>
+    <h2>従来のものに加えて駒が増えております</h2>
+    <h2>一つ言っておくが..これはパクリじゃない、オマージュだ！
+    </h2>
+    <canvas id="tetris" width="480" height="500"></canvas>
+    <div id="ui">
+        <div id="score">Score: 0</div>
+        <button id="startBtn">Game Start</button>
+    </div>
+    <audio id="exp" src="爆発1.mp3"></audio>
+    <audio id="waa" src="スタジアムの歓声1.mp3"></audio>
+    <audio id="level" src="レベルアップ.mp3"></audio>
+    <audio id="a" src="backsound.mp3"></audio>
+    <script src="game.js"></script>
+    <script> const canvas = document.getElementById('tetris');
+        const context = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+
+        context.scale(20, 20);
+
+        // ぺポリミノの形
+        function createPiece(type) {
+            if (type === 'I') return [[0, 1, 0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0, 0]];
+            if (type === 'L') return [[0, 2, 0], [0, 2, 0], [0, 2, 2]];
+            if (type === 'J') return [[0, 3, 0], [0, 3, 0], [3, 3, 0]];
+            if (type === 'O') return [[4, 4], [4, 4]];
+            if (type === 'Z') return [[5, 5, 0], [0, 5, 5], [0, 0, 0]];
+            if (type === 'S') return [[0, 6, 6], [6, 6, 0], [0, 0, 0]];
+            if (type === 'T') return [[0, 7, 0], [7, 7, 7], [0, 0, 0]];
+            if (type === 'G') return [[0, 0, 0, 8, 8, 8, 0, 0, 0], [0, 0, 8, 0, 0, 0, 8, 0, 0], [0, 8, 0, 0, 0, 0, 0, 8, 0], [8, 0, 0, 0, 0, 0, 0, 0, 8], [8, 0, 0, 0, 0, 0, 0, 0, 8], [8, 0, 0, 0, 0, 0, 0, 0, 8], [0, 8, 0, 0, 0, 0, 0, 8, 0], [0, 0, 8, 0, 0, 0, 8, 0, 0], [0, 0, 0, 8, 8, 8, 0, 0, 0]]
+            if (type === 'Q') return [[0, 9, 0]]
+            if (type === 'B') return [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+            if (type === 'P') return [[10, 10, 0], [10, 0, 0]]
+            if (type === 'A') return [[0, 11, 0], [0, 11, 0], [11, 0, 11]]
+            if (type === 'C') return [[0, 12, 12, 12, 0], [12, 12, 12,  12, 12], [0, 12, 12, 12, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]
+        }
+
+        // 描画処理 Logical cynical tropical
+        function draw() {
+            context.fillStyle = '#000';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            drawMatrix(arena, {x: 0, y: 0});
+            drawMatrix(player.matrix, player.pos);
+        }
+
+        function drawMatrix(matrix, offset) {
+            matrix.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) {
+                        context.fillStyle = ['none','cyan','orange','blue','yellow','red','green','purple','brown','darkcyan', 'wheat', 'gray', 'pink'][value];
+                        context.fillRect(x + offset.x, y + offset.y, 1, 1);
+                    }
+                });
+            });
+        }
+
+        // 衝突判定 Galaxie Impact
+        function collide(arena, player) {
+            const [m, o] = [player.matrix, player.pos];
+            for (let y = 0; y < m.length; ++y) {
+                for (let x = 0; x < m[y].length; ++x) {
+                    if (m[y][x] !== 0 && (arena[y + o.y] && arena[y + o.y][x + o.x]) !== 0) return true;
+                }
+            }
+            return false;
+        }
+        
+        // 盤面の作成　Fullauto creation
+        function createMatrix(w, h) {
+            const matrix = [];
+            while (h--) matrix.push(new Array(w).fill(0));
+            return matrix;
+        }
+        
+        const explosion = document.getElementById('exp')
+        const waa = document.getElementById('waa')
+        const level = document.getElementById('level')
+        
+        function sound(music){
+            if (music === '1'){explosion.play()}
+            if (music === '2'){waa.play()}
+            if (music === '3'){level.play()}
+        } 
+        // ライン消去　Vanishing・the・Line!
+        function arenaSweep() {
+            let rowCount = 1;
+            outer: for (let y = arena.length - 1; y > 0; --y) {
+                for (let x = 0; x < arena[y].length; ++x) {
+                    if (arena[y][x] === 0) continue outer;
+                }
+                const row = arena.splice(y, 1)[0].fill(0);
+                arena.unshift(row);
+                ++y;
+                player.score += rowCount * 10;
+                const musica = '123'
+                player.matrix = sound(musica[musica.length * Math.random() | 0]);
+                
+                rowCount *= 2;
+                
+            }
+            updateScore();
+        }
+
+        // プレイヤーの動作を決めるとこ
+        function playerDrop() {
+            player.pos.y++;
+            if (collide(arena, player)) {
+                player.pos.y--;
+                merge(arena, player);
+                playerReset();
+                arenaSweep();
+            }
+            dropCounter = 0;
+        }
+
+        function playerMove(dir) {
+            player.pos.x += dir;
+            if (collide(arena, player)) player.pos.x -= dir;
+        }
+
+        function playerRotate(dir) {
+            const pos = player.pos.x;
+            let offset = 1;
+            rotate(player.matrix, dir);
+            while (collide(arena, player)) {
+                player.pos.x += offset;
+                offset = -(offset + (offset > 0 ? 1 : -1));
+                if (offset > player.matrix[0].length) {
+                    rotate(player.matrix, -dir);
+                    player.pos.x = pos;
+                    return;
+                }
+            }
+        }
+
+        function rotate(matrix, dir) {
+            for (let y = 0; y < matrix.length; ++y) {
+                for (let x = 0; x < y; ++x) {
+                    [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]];
+                }
+            }
+            if (dir > 0) matrix.forEach(row => row.reverse());
+            else matrix.reverse();
+        }
+
+        function merge(arena, player) {
+            player.matrix.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) arena[y + player.pos.y][x + player.pos.x] = value;
+                });
+            });
+        }
+
+        function playerReset() {
+            const pieces = 'ILJOTSZQBPAC';
+            player.matrix = createPiece(pieces[pieces.length * Math.random() | 0]);
+            player.pos.y = 0;
+            player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
+            if (collide(arena, player)) {
+                arena.forEach(row => row.fill(0));
+                player.score = 0;
+                updateScore();
+            }
+        }
+        
+        let dropCounter = 0;
+        let dropInterval = 1000;
+        let lastTime = 0;
+        
+        function updateScore() {
+            scoreElement.innerText = `Score: ${player.score}`;
+        }
+        
+
+        
+
+        function update(time = 0) {
+            const deltaTime = time - lastTime;
+            lastTime = time;
+            dropCounter += deltaTime;
+            if (dropCounter > dropInterval) playerDrop();
+            draw();
+            requestAnimationFrame(update);
+        }
+
+        const arena = createMatrix(24, 25);
+    
+            const player = { pos: {x: 0, y: 0}, matrix: null, score: 0 }
+
+        // キーボードの操作
+        document.addEventListener('keydown', event => {
+            if (event.keyCode === 37) playerMove(-1); // 左
+            else if (event.keyCode === 39) playerMove(1);  // 右
+            else if (event.keyCode === 40) playerDrop();   // 下
+            else if (event.keyCode === 38) playerRotate(-1); // 上
+        });
+        const a = document.getElementById('a')
+        document.getElementById('startBtn').addEventListener('click', () => {
+            playerReset();
+            updateScore();
+            update();
+            a.play()
+        });
+    function rest() {if (btn.context === "Game Start"){btn.context === "Restart"}
+                     else if (btn.context === "Restart");}
+        
+    btn.getElementById('startBtn').addEventListener('click', () => {
+            rest()
+        })
+          
+
+        </script>
+</body>
+</html>
