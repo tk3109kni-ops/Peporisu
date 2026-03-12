@@ -6,35 +6,51 @@
     <link rel="icon" type="image/png" href="tetorisu.jpg" >
     <style>
         body { background-image: url(Background.png); color: white; text-align: center; font-family: sans-serif; }
-        canvas { border: 2px solid #fff; background-color: #000; display: block; margin: 20px auto; }
-        #ui { margin-top: 10px; }
-        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #222; color: #fff; border: 1px solid #fff; }
+        canvas { border: 2px solid #fff; background-color: #000; display: block; margin: 20px auto;}
+        #ui { margin-top: -350px; float: right; margin-left: 100px;}
+        button { padding: 10px; font-size: 16px; cursor: pointer; background: black; color: #fff; border: 1px solid #fff; }
         button:hover { background: #444; }
         h1{color: #000;}
         #score{
-            color: #444;
+            color: red;
+            font-weight: 700;
+            font-size: 24px;
         }
-        h2{color: #000;}
+        h2{color: #000;
+            border: 10px solid yellow;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #fff;
+        }
+        img{
+            width: 15%;
+            height: 15%;
+            float: right;
+            margin-left: 10px;
+            }
     </style>
 </head>
 <body>
     <h1>PEPORIS</h1>
-    <h2>従来のものに加えて駒が増えております</h2>
-    <h2>一つ言っておくが..これはパクリじゃない、オマージュだ！
+    <h2>従来のものに加えて駒が増えております<br>
+        一つ言っておくが..これはパクリじゃない、オマージュだ！
     </h2>
+    <img src="marisa.png">
     <canvas id="tetris" width="480" height="500"></canvas>
     <div id="ui">
-        <div id="score">Score: 0</div>
-        <button id="startBtn">Game Start</button>
+        <div id="score">すこあ: 0</div>
+        <button id="startBtn" onclick="changeText(this)">Game Start</button>
     </div>
     <audio id="exp" src="爆発1.mp3"></audio>
     <audio id="waa" src="スタジアムの歓声1.mp3"></audio>
     <audio id="level" src="レベルアップ.mp3"></audio>
     <audio id="a" src="backsound.mp3"></audio>
-    <script src="game.js"></script>
     <script> const canvas = document.getElementById('tetris');
         const context = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
+        let gameStarted = false;
+        let paused = false;
+        function changeText(button){if(!gameStarted){gameStarted = true; button.innerText = "一時停止"; paused = false;playerReset(); update(); updateScore(); a.play(); return;}else if(!paused){button.innerText = "再開"; paused = true}else if(button.innerText === "再開"){button.innerText = "一時停止"; paused = false; playerReset(); updateScore(); update(); a.play(); return}else{button.innerText === "一時停止"; paused = false; update()}}
 
         context.scale(20, 20);
 
@@ -113,7 +129,7 @@
                 ++y;
                 player.score += rowCount * 10;
                 const musica = '123'
-                player.matrix = sound(musica[musica.length * Math.random() | 0]);
+                sound(musica[musica.length * Math.random() | 0]);
                 
                 rowCount *= 2;
                 
@@ -188,21 +204,27 @@
         let lastTime = 0;
         
         function updateScore() {
-            scoreElement.innerText = `Score: ${player.score}`;
+            scoreElement.innerText = `すこあ: ${player.score}`;
         }
         
 
         
 
-        function update(time = 0) {
+         function update(time = 0) {
+
+            if (paused) return;
+
             const deltaTime = time - lastTime;
             lastTime = time;
-            dropCounter += deltaTime;
-            if (dropCounter > dropInterval) playerDrop();
-            draw();
-            requestAnimationFrame(update);
-        }
 
+            dropCounter += deltaTime;
+
+            if (dropCounter > dropInterval) playerDrop();
+
+            draw();
+
+            requestAnimationFrame(update);
+            }
         const arena = createMatrix(24, 25);
     
             const player = { pos: {x: 0, y: 0}, matrix: null, score: 0 }
@@ -221,12 +243,7 @@
             update();
             a.play()
         });
-    function rest() {if (btn.context === "Game Start"){btn.context === "Restart"}
-                     else if (btn.context === "Restart");}
-        
-    btn.getElementById('startBtn').addEventListener('click', () => {
-            rest()
-        })
+   
           
 
         </script>
